@@ -9,8 +9,6 @@ import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.util.Log;
 
-import com.example.aabb.R;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -20,10 +18,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 public class LaurelRender implements GLSurfaceView.Renderer {
-
-    private final VertexLoader loader;
     private final Context mActivityContext;
-    private final Ray r;
 
     private final float[] mModelMatrices;
     private final float[] mModelMatrix = new float[16];
@@ -36,8 +31,6 @@ public class LaurelRender implements GLSurfaceView.Renderer {
     private final FloatBuffer mBoundingBoxBuffer;
     private final FloatBuffer mRayBuffer;
     private final FloatBuffer mColorBuffer;
-    private final BVH aabbs = new BVH();
-    private final boolean[] intersects;
     private final float[][] colors;
 
     private final int numVBOHandles = 5;
@@ -75,10 +68,10 @@ public class LaurelRender implements GLSurfaceView.Renderer {
 
     public LaurelRender(Context context, Object... args) {
         this.mActivityContext = context;
-        this.r = (Ray) args[0];
+        Ray r = (Ray) args[0];
         this.numInstances = (int) args[1];
 
-        loader = new VertexLoader(context, "laurel.obj");
+        VertexLoader loader = new VertexLoader(context, "laurel.obj");
         List<Float> vertexArray = loader.getVertexArray();
 
         numPoints = vertexArray.size() / (mPositionDataSize + mNormalDataSize + mTextureDataSize);
@@ -95,6 +88,7 @@ public class LaurelRender implements GLSurfaceView.Renderer {
         AABB aabb = loader.aabb;
         mModelMatrices = ModelGenerator.generate(numInstances);
 
+        BVH aabbs = new BVH();
         for (int i = 0; i < numInstances; i++) {
             float[] modelMatrix = new float[16];
             System.arraycopy(mModelMatrices, i * 16, modelMatrix, 0, 16);
@@ -103,7 +97,7 @@ public class LaurelRender implements GLSurfaceView.Renderer {
             aabbs.insert(transformedAABB, i);
         }
 
-        intersects = aabbs.checkIntersectionWithRay(r);
+        boolean[] intersects = aabbs.checkIntersectWithRay(r);
         for (int i = 0; i < numInstances; i++) {
             Log.d("intersects", String.valueOf(intersects[i]));
         }
@@ -118,10 +112,6 @@ public class LaurelRender implements GLSurfaceView.Renderer {
         mRayBuffer = Buffer.getRayBuffer(new Ray[]{r});
 
         colors = Color.mapToColors(intersects);
-        for (int i = 0; i < colors.length; i++) {
-            Log.d("intersects", String.valueOf(colors[i][0]) + " " + colors[i][1] + " " + colors[i][2] + " " + colors[i][3]);
-        }
-
         mColorBuffer = ByteBuffer.allocateDirect(colors.length * 4 * mBytesPerFloat)
                 .order(ByteOrder.nativeOrder())
                 .asFloatBuffer();
@@ -348,12 +338,12 @@ public class LaurelRender implements GLSurfaceView.Renderer {
         final float bottom = -1.0f;
         final float top = 1.0f;
         final float near = 1.0f;
-        final float far = 50.0f;
+        final float far = 100.0f;
 
         Matrix.frustumM(mProjectionMatrix, 0, left, right, bottom, top, near, far);
     }
 
-    void setupModelMatrixBuffer(){
+    private void setupModelMatrixBuffer(){
         GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, mVBOHandles[2]);
 
         ByteBuffer mappedByteBuffer = (ByteBuffer) GLES30.glMapBufferRange(
@@ -371,7 +361,7 @@ public class LaurelRender implements GLSurfaceView.Renderer {
         }
     }
 
-    void setupColorBuffer(){
+    private void setupColorBuffer(){
         GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, mVBOHandles[3]);
 
         ByteBuffer mappedByteBuffer = (ByteBuffer) GLES30.glMapBufferRange(

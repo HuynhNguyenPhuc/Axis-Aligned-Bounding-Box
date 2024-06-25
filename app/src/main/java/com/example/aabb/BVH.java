@@ -8,13 +8,6 @@ class BVHNode {
     public BVHNode left;
     public BVHNode right;
 
-    public BVHNode(){
-        this.aabb = null;
-        this.id = -1;
-        this.left = null;
-        this.right = null;
-    }
-
     public BVHNode(AABB aabb, int id) {
         this.aabb = aabb;
         this.id = id;
@@ -82,43 +75,55 @@ public class BVH {
             node.left = new BVHNode(node.aabb, node.id);
             node.right = new BVHNode(aabb, id);
             node.aabb = node.aabb.expand(aabb);
+            node.id = -1;
         } else {
-            boolean traversalLeft = false;
+            float leftVolumeIncrease = node.left.aabb.expand(aabb).getSurfaceArea() - node.left.aabb.getSurfaceArea();
+            float rightVolumeIncrease = node.right.aabb.expand(aabb).getSurfaceArea() - node.right.aabb.getSurfaceArea();
 
-            if (node.left.aabb.checkCollision(aabb) && !node.right.aabb.checkCollision(aabb)) traversalLeft = true;
-            else if (node.right.aabb.checkCollision(aabb) && !node.left.aabb.checkCollision(aabb)) traversalLeft = false;
-            else {
-                float leftVolumeIncrease = node.left.aabb.expand(aabb).getSurfaceArea() - node.left.aabb.getSurfaceArea();
-                float rightVolumeIncrease = node.right.aabb.expand(aabb).getSurfaceArea() - node.right.aabb.getSurfaceArea();
-
-                traversalLeft = leftVolumeIncrease < rightVolumeIncrease;
-            }
-
-            if (traversalLeft){
+            if (leftVolumeIncrease < rightVolumeIncrease){
                 insertRecursive(node.left, aabb, id);
-                node.left.aabb = node.left.aabb.expand(aabb);
+                node.aabb = node.aabb.expand(node.left.aabb);
             } else {
                 insertRecursive(node.right, aabb, id);
-                node.right.aabb = node.right.aabb.expand(aabb);
+                node.aabb = node.aabb.expand(node.right.aabb);
             }
         }
     }
 
-    public boolean[] checkIntersectionWithRay(Ray r) {
+    public boolean[] checkIntersectWithRay(Ray r) {
         boolean[] intersections = new boolean[numAABBs];
-        checkIntersectionWithRayRecursive(root, r, intersections);
+        checkIntersectWithRayRecursive(root, r, intersections);
         return intersections;
     }
 
-    private void checkIntersectionWithRayRecursive(BVHNode node, Ray r, boolean[] intersections) {
+    private void checkIntersectWithRayRecursive(BVHNode node, Ray r, boolean[] intersections) {
         if (node == null) return;
-        if (node.aabb.checkIntersectionWithRay(r)) {
+        if (node.aabb.checkIntersectWithRay(r)) {
             if (node.isLeaf()) {
                 intersections[node.id] = true;
             } else {
-                checkIntersectionWithRayRecursive(node.left, r, intersections);
-                checkIntersectionWithRayRecursive(node.right, r, intersections);
+                checkIntersectWithRayRecursive(node.left, r, intersections);
+                checkIntersectWithRayRecursive(node.right, r, intersections);
             }
         }
+    }
+
+    public int[] getIntersectWithRay(Ray r, int initialSize) {
+        int[] intersections = new int[initialSize];
+        int count = getIntersectWithRayRecursive(root, r, intersections, 0);
+        return Arrays.copyOf(intersections, count);
+    }
+
+    private int getIntersectWithRayRecursive(BVHNode node, Ray r, int[] intersections, int index) {
+        if (node == null) return index;
+        if (node.aabb.checkIntersectWithRay(r)) {
+            if (node.isLeaf()) {
+                intersections[index++] = node.id;
+            } else {
+                index = getIntersectWithRayRecursive(node.left, r, intersections, index);
+                index = getIntersectWithRayRecursive(node.right, r, intersections, index);
+            }
+        }
+        return index;
     }
 }

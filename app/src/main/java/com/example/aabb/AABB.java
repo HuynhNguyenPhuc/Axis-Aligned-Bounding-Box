@@ -7,12 +7,12 @@ public class AABB {
     public final Point min;
     public final Point max;
 
-    AABB(Point min, Point max){
+    public AABB(Point min, Point max){
         this.min = min;
         this.max = max;
     }
 
-    AABB(float[] min, float[] max){
+    public AABB(float[] min, float[] max){
         this.min = new Point(min);
         this.max = new Point(max);
     }
@@ -113,7 +113,7 @@ public class AABB {
         );
     }
 
-    boolean checkIntersectionWithRay(Ray r) {
+    boolean checkIntersectWithRay(Ray r) {
         float tMinByX, tMaxByX;
         if (r.direction.x == 0) {
             if (r.origin.x < min.x || r.origin.x > max.x) return false;
