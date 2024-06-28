@@ -60,16 +60,4 @@ public class Mode1Activity extends AppCompatActivity {
             finish();
         });
     }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        mGLView.onPause();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        mGLView.onResume();
-    }
 }
