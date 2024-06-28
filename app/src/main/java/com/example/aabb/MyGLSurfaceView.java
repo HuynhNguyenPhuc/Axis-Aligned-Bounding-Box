@@ -4,8 +4,6 @@ import android.content.Context;
 import android.opengl.GLSurfaceView;
 
 public class MyGLSurfaceView extends GLSurfaceView {
-    private Render mRenderer;
-    private LaurelRender mLaurelRenderer;
 
     public MyGLSurfaceView(Context context, String mode, Object... args) {
         super(context);
@@ -13,13 +11,11 @@ public class MyGLSurfaceView extends GLSurfaceView {
         setEGLContextClientVersion(3);
 
         if (!mode.equals("mode4")) {
-            mRenderer = new Render(this, mode, args);
-            setRenderer(mRenderer);
+            this.setRenderer(new Render(this, mode, args));
         }
         else {
-            mLaurelRenderer = new LaurelRender(context, args);
-            setRenderer(mLaurelRenderer);
+            this.setRenderer(new LaurelRender(context, args));
         }
-        setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        this.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
 }

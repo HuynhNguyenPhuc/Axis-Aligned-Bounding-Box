@@ -3,7 +3,6 @@ package com.example.aabb;
 import android.os.Bundle;
 import android.widget.EditText;
 import androidx.appcompat.app.AppCompatActivity;
-import com.example.aabb.R;
 
 public class Mode1Activity extends AppCompatActivity {
 
@@ -60,5 +59,17 @@ public class Mode1Activity extends AppCompatActivity {
         findViewById(R.id.return_button).setOnClickListener(v -> {
             finish();
         });
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mGLView.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mGLView.onResume();
     }
 }
